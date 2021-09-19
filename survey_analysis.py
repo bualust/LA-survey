@@ -10,10 +10,10 @@ from collections import Counter
 plt.style.use('ggplot')
 #plt.style.use('fivethirtyeight')
 
-# -------
+# ---------------------------
 # main
-# -------
-def main(argv):
+# ---------------------------
+def main():
      parser = OptionParser()
      parser.add_option("--age", dest="age", default="15",help="Apply minimum cut on age [default: %default]", metavar="INT")
      parser.add_option("--gender", dest="gender", default="femminile",help="Apply selection on gender [default: %default]", metavar="STRING")
@@ -33,54 +33,38 @@ def main(argv):
      looper(age)
      exit()
 
-# -------
+# ---------------------------
 # Looper: loops over answers 
-# -------
-
+# ---------------------------
 def looper(AGE):
-
-    FILE = 'Questionarion_Sept2021.tsv'
+    FILE = 'Questionario_Sept2021.tsv'
     print('--- Opening data file:',FILE)
     num_lines = sum(1 for line in open(FILE))
-    print('--- Number of answers available: ',num_lines)
+    print('--- Number of answers available: ',num_lines-1)
 
-    variables_name = []
-    with open(FILE, 'r') as csvfile:
-        variables_name = (csvfile.readline()).split('	')
-        number_of_variables = np.size(variables_name)
-        arr_age    = np.zeros(num_lines-1,dtype=int)
-        arr_gender = np.zeros(num_lines-1,dtype="object")
-        arr_study  = np.zeros(num_lines-1,dtype="object")
-        arr_nat    = np.zeros(num_lines-1,dtype="object")
-        i=0
-        for line in csvfile:
-            result_line = line.split('	')
-        #    for i in variables_name:
-        #        exec(object'arr_{i} = result_line[i+1]')
-            arr_age[i]    = result_line[1]
-            arr_gender[i] = result_line[2]
-            arr_study[i]  = result_line[3]
-            arr_nat[i]    = result_line[4]
-            #if result_line[1] < AGE: 
-            #  arr_age[i] = -99
-            #else:
-            #  arr_age[i] = result_line[1]
-            i=i+1
-    
-        print('Gender: ',Counter(arr_gender))
-        print('Study: ',Counter(arr_study))
-        print('Nationality: ',Counter(arr_nat))
-        fig, ax = plt.subplots(2,2)
-        ax[0,0].hist(arr_age, [15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100])
-        ax[0,0].set_title("Eta\'")
-        ax[0,1].hist(arr_gender)
-        ax[0,1].set_title("Genere")
-        ax[1,0].hist(arr_study)
-        ax[1,0].set_title("Titolo di studio")
-        ax[1,1].hist(arr_nat)
-        ax[1,1].set_title("Nazionalita\'")
-        plt.show()
+    arr_tsv = np.genfromtxt(FILE, delimiter='\t', dtype='object',encoding='utf-8') #cp1252 to be used to decode
+    number_of_questions = len(arr_tsv[0,:]) -1  #number of plots (ghe first one is the date, we can ignore it)
+    print('--- Number of questions posed: ',number_of_questions)
+
+    i=1
+    while i <= number_of_questions-4: 
+       print('Currently processing question number: ',i)
+       fig, ax = plt.subplots(2,2)
+       if i==1:
+          ax[0,0].hist(np.array(arr_tsv[1:,1],dtype=int), [15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100])
+       else:
+          ax[0,0].hist(arr_tsv[1:,i])
+       ax[0,0].set_title(arr_tsv[0,i].decode('cp1252'))
+       ax[0,1].hist(arr_tsv[1:,i+1])
+       ax[0,1].set_title(arr_tsv[0,i+1].decode('cp1252'))
+       ax[1,0].hist(arr_tsv[1:,i+2])
+       ax[1,0].set_title(arr_tsv[0,i+2].decode('cp1252'))
+       ax[1,1].hist(arr_tsv[1:,i+3])
+       ax[1,1].set_title(arr_tsv[0,i+3].decode('cp1252'))
+       plt.show()
+       i=i+4
+    print('Next bunch of plots')
 
 # __main__
 if __name__ == '__main__':
-  main(sys.argv[1:])
+  main()
