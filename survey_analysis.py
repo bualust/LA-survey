@@ -19,7 +19,7 @@ plt.style.use('ggplot')
 # ---------------------------
 def main():
      parser = OptionParser()
-     parser.add_option("--age", dest="age", default="15",help="Apply minimum cut on age [default: %default]", metavar="INT")
+     parser.add_option("--age", dest="age", default="15",help="Apply minimum cut on age [default: %default]", type=int)
      parser.add_option("--gender", dest="gender", default=True,help="Split plots based on gender [default: %default]", metavar="STRING")
 
      try:
@@ -128,7 +128,7 @@ def age_plot(arr_tsv,ax1,i):
    x = np.arange(len(age_bins))
    pps = ax1.bar(x-w,grouped_data,label='inclusivo',width=w) 
    #gender split
-   if gender_opt:
+   if gender_opt==True:
       add_gender_bars(arr_tsv,data,age_bins,True,ax1,x)
    age_bins_label = ['15-20','20-25','25-30','30-35','35-40','40-45','45-50','50-55','55-60','60-65','65-70','70-75','75-80']
    xaxis = np.array(age_bins_label,dtype=str)
@@ -140,12 +140,14 @@ def age_plot(arr_tsv,ax1,i):
 
 def bar_chart(arr_tsv,ax1,i,order):
    data = np.array(arr_tsv[1:,i])
+   data = apply_age_cut(arr_tsv,data)
    cnt_data = Counter(data)
    ordered_data = {ans:cnt_data[ans] for ans in order}
    x = np.arange(len(ordered_data.keys()))
-   pps = ax1.bar(x-w,ordered_data.values(),label='inclusivo',width=w) 
+   custom_label = 'inclusivo, eta >= '+str(age)
+   pps = ax1.bar(x-w,ordered_data.values(),label=custom_label,width=w) 
    #gender split
-   if gender_opt:
+   if gender_opt==True:
       add_gender_bars(arr_tsv,data,order,False,ax1,x)
    xaxis = np.array(order,dtype=str)
    if i>=29 and i<=31: 
@@ -161,6 +163,11 @@ def bar_chart(arr_tsv,ax1,i,order):
    ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
    ax1.set_xticklabels(xaxis)
    return pps
+
+def apply_age_cut(arr_tsv,data):
+   age_values = np.array(arr_tsv[1:,1],dtype=int)
+   data_age = data[age_values>=age]
+   return data_age
 
 def add_gender_bars(arr_tsv,data,order,isAge,ax1,x):
    gender = np.array(arr_tsv[1:,2])
