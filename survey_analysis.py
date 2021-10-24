@@ -20,6 +20,7 @@ plt.style.use('ggplot')
 def main():
      parser = OptionParser()
      parser.add_option("--age", dest="age", default="15",help="Apply minimum cut on age [default: %default]", type=int)
+     parser.add_option("--agemax", dest="agemax", default="85",help="Apply max cut on age [default: %default]", type=int)
      parser.add_option("--gender", dest="gender", default=True,help="Split plots based on gender [default: %default]", metavar="STRING")
 
      try:
@@ -30,6 +31,9 @@ def main():
 
      global age
      age = options.age
+
+     global agemax
+     agemax = options.agemax
 
      global gender_opt
      gender_opt = options.gender
@@ -69,13 +73,19 @@ def looper():
           else:
              order,do_hist = check_order(i)
              if(do_hist):
-                ax1.hist(arr_tsv[1:,i])
+                data = arr_tsv[1:,i]
+                age_values = np.array(arr_tsv[1:,1],dtype=int)
+                data_filter = data[(age_values>=age) & (age_values<agemax)]
+                ax1.hist(data_filter)
+                #ax1.hist(arr_tsv[1:,i])
              else:
                 pps = bar_chart(arr_tsv,ax1,i,order)
           if do_hist==0:
              percentage_on_bins(ax1,pps)
           ax1.set_title(arr_tsv[0,i].decode('cp1252'))
-          ax1.legend()
+          #add age range label
+          custom_label = 'Eta ['+str(age)+'-'+str(agemax)+'] anni'
+          leg = ax1.legend(title=custom_label)
           plt.show()
           i=i+1
     print('Next bunch of plots')
@@ -92,9 +102,10 @@ def group_age_data(cnt_data,age_bins):
              grouped_data[i]+=age_count
    return grouped_data
 
-def split_gender(data,gender,order, isAge):
-   data_f = data[(gender==b'femminile')]
-   data_m = data[(gender==b'maschile')]
+def split_gender(data,gender,order, isAge,arr_tsv):
+   age_values = np.array(arr_tsv[1:,1],dtype=int)
+   data_f = data[(gender==b'femminile') & (age_values>=age) & (age_values<agemax)]
+   data_m = data[(gender==b'maschile') & (age_values>=age) & (age_values<agemax)]
    cnt_data_f = Counter(data_f)
    cnt_data_m = Counter(data_m)
    if isAge:
@@ -140,12 +151,10 @@ def age_plot(arr_tsv,ax1,i):
 
 def bar_chart(arr_tsv,ax1,i,order):
    data = np.array(arr_tsv[1:,i])
-   data = apply_age_cut(arr_tsv,data)
    cnt_data = Counter(data)
    ordered_data = {ans:cnt_data[ans] for ans in order}
    x = np.arange(len(ordered_data.keys()))
-   custom_label = 'inclusivo, eta >= '+str(age)
-   pps = ax1.bar(x-w,ordered_data.values(),label=custom_label,width=w) 
+   pps = ax1.bar(x-w,ordered_data.values(),label='inclusivo',width=w) 
    #gender split
    if gender_opt==True:
       add_gender_bars(arr_tsv,data,order,False,ax1,x)
@@ -166,12 +175,12 @@ def bar_chart(arr_tsv,ax1,i,order):
 
 def apply_age_cut(arr_tsv,data):
    age_values = np.array(arr_tsv[1:,1],dtype=int)
-   data_age = data[age_values>=age]
+   data_age = data[(age_values>=age) & (age_values<agemax)]
    return data_age
 
 def add_gender_bars(arr_tsv,data,order,isAge,ax1,x):
    gender = np.array(arr_tsv[1:,2])
-   ordered_data_f, ordered_data_m = split_gender(data,gender,order,isAge)
+   ordered_data_f, ordered_data_m = split_gender(data,gender,order,isAge,arr_tsv)
    ax1.bar(x,ordered_data_f,color='lightpink',label='femminile',width=w)
    ax1.bar(x+w,ordered_data_m,color='cornflowerblue',label='maschile',width=w)
 
