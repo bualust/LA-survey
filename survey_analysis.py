@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 from optparse import OptionParser
 from collections import Counter
 import pdb
@@ -58,24 +59,53 @@ def looper(AGE):
           print('Currently processing question number: ',i)
           fig, (ax1) = plt.subplots(1)
           if i==1:
+             age_bins = [15,20,25,30,35,40,45,50,55,60,65,70,75]
              data = np.array(arr_tsv[1:,i],dtype=int)
-             age_bins = [15,20,25,30,35,40,45,50,55,60,65,70,75,80,85]
-             ax1.hist(data,age_bins,color='orange',label='inclusivo')
+             cnt_data = Counter(data)
+             grouped_data = group_age_data(cnt_data,age_bins)
+             x = np.arange(len(age_bins))
+             w = 0.2
+             ax1.bar(x-w,grouped_data,label='inclusivo',width=w) 
+	     #gender split
              gender = np.array(arr_tsv[1:,2])
              data_hist_f = data[(gender==b'femminile')]
              data_hist_m = data[(gender==b'maschile')]
-             ax1.hist(data_hist_f,age_bins,color='lightpink',label='femminile')
-             ax1.hist(data_hist_m,age_bins,color='cornflowerblue',label='maschile')
+             cnt_data_f = Counter(data_hist_f)
+             cnt_data_m = Counter(data_hist_m)
+             ordered_data_f = group_age_data(cnt_data_f,age_bins)
+             ordered_data_m = group_age_data(cnt_data_m,age_bins)
+             ax1.bar(x,ordered_data_f,color='lightpink',label='femminile',width=w)
+             ax1.bar(x+w,ordered_data_m,color='cornflowerblue',label='maschile',width=w)
+             age_bins_label = ['15-20','20-25','25-30','30-35','35-40','40-45','45-50','50-55','55-60','60-65','65-70','70-75','75-80']
+             xaxis = np.array(age_bins_label,dtype=str)
+             print(x, xaxis)
+	     #this prevents the x-labels to be cropped
+             ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
+             ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
+             ax1.set_xticklabels(xaxis)
           elif (i>=9 and i<=14) or (i>=16 and i<=25) or (i==28) or (i>=32 and i<=38) or (i==40) or (i==42):
              order = [b"non so", b"per nulla",b"poco",b"abbastanza",b"molto"]
-             data = Counter(np.array(arr_tsv[1:,i]))
-             ordered_data = {ans:data[ans] for ans in order}
-             ax1.bar(ordered_data.keys(),ordered_data.values()) 
-             #gender = np.array(arr_tsv[1:,2])
-             #data_hist_f = ordered_data[(gender==b'femminile')]
-             #data_hist_m = ordered_data[(gender==b'maschile')]
-             #ax1.bar(ordered_data.keys(),data_hist_f,color='lightpink',label='femminile')
-             #ax1.bar(ordered_data.keys(),data_hist_m,color='cornflowerblue',label='maschile')
+             data = np.array(arr_tsv[1:,i])
+             cnt_data = Counter(data)
+             ordered_data = {ans:cnt_data[ans] for ans in order}
+             x = np.arange(len(ordered_data.keys()))
+             w = 0.2
+             ax1.bar(x-w,ordered_data.values(),label='inclusivo',width=w) 
+	     #gender split
+             gender = np.array(arr_tsv[1:,2])
+             data_hist_f = data[(gender==b'femminile')]
+             data_hist_m = data[(gender==b'maschile')]
+             cnt_data_hist_f = Counter(data_hist_f)
+             cnt_data_hist_m = Counter(data_hist_m)
+             ordered_data_f = {ans:cnt_data_hist_f[ans] for ans in order}
+             ordered_data_m = {ans:cnt_data_hist_m[ans] for ans in order}
+             ax1.bar(x,ordered_data_f.values(),color='lightpink',label='femminile',width=w)
+             ax1.bar(x+w,ordered_data_m.values(),color='cornflowerblue',label='maschile',width=w)
+             xaxis = np.array(order,dtype=str)
+	     #this prevents the x-labels to be cropped
+             ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
+             ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
+             ax1.set_xticklabels(xaxis)
           elif i>=29 and i<=31: 
              order = [b"1", b"2",b"3",b"4",b"5"]
              data = Counter(np.array(arr_tsv[1:,i]))
@@ -84,10 +114,22 @@ def looper(AGE):
           else:
              ax1.hist(arr_tsv[1:,i])
           ax1.set_title(arr_tsv[0,i].decode('cp1252'))
+          ax1.legend()
           plt.show()
           i=i+1
     print('Next bunch of plots')
 
+def group_age_data(cnt_data,age_bins):
+   order = []
+   for index in range(15,86,1):
+       order.append(index)
+   ordered_data = {ans:cnt_data[ans] for ans in order}
+   grouped_data = np.zeros(len(age_bins))
+   for age_key,age_count in zip(ordered_data.keys(),ordered_data.values()):
+       for i in range(len(age_bins)-1):
+          if age_key>=age_bins[i] and age_key<age_bins[i+1]:
+             grouped_data[i]+=age_count
+   return grouped_data
 # __main__
 if __name__ == '__main__':
   main()
