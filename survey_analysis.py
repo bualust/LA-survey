@@ -5,7 +5,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.image as image
 import matplotlib.ticker as mticker
+from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
 from optparse import OptionParser
 from collections import Counter
 import pdb
@@ -65,7 +67,7 @@ def looper():
           print('Skipping question number:  ',arr_tsv[0,i].decode('cp1252'))
           i=i+1
        else:
-          print('Currently processing question number: ',arr_tsv[0,i].decode('cp1252'))
+          print('Currently processing question number: ',arr_tsv[0,i].decode('cp1252'),i)
           fig, (ax1) = plt.subplots(1)
           do_hist = 0
           if i==1:
@@ -76,8 +78,22 @@ def looper():
                 data = arr_tsv[1:,i]
                 age_values = np.array(arr_tsv[1:,1],dtype=int)
                 data_filter = data[(age_values>=age) & (age_values<agemax)]
-                ax1.hist(data_filter)
-                #ax1.hist(arr_tsv[1:,i])
+                #ax1.hist(data_filter)
+                cnt_data_filter = Counter(data_filter)
+                total = sum(cnt_data_filter.values())
+                percent = {key: round(100*value/total,2) for key, value in cnt_data_filter.items()}
+                #print(percent.most_common(1))
+                print(cnt_data_filter.most_common(3))
+                list_common = cnt_data_filter.most_common(4)
+                most_comm_dic = {}
+                for k in range(3):
+                   most_comm_dic[list_common[k][0].decode("utf-8")] = list_common[k][1]
+                x = np.arange(len(most_comm_dic.keys()))
+                ax1.bar(x,most_comm_dic.values(),label='inclusivo',width=w) 
+                ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
+                xaxis_labels = most_comm_dic.keys()
+                ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis_labels))
+                ax1.set_xticklabels(xaxis_labels)
              else:
                 pps = bar_chart(arr_tsv,ax1,i,order)
           if do_hist==0:
@@ -86,6 +102,26 @@ def looper():
           #add age range label
           custom_label = 'Eta ['+str(age)+'-'+str(agemax)+'] anni'
           leg = ax1.legend(title=custom_label)
+          yax_lim = ax1.get_ylim()
+          ax1.text(-0.05, yax_lim[1]*1.1,'Ladispoli Attiva*', size=15, color='black',fontstyle='italic')
+          ax1.set_ylim(yax_lim[0],yax_lim[1]*1.2)
+          if i==1:
+             y_pos_text = -7
+          elif i==6 or i==5 or i==41 or i==4:
+             y_pos_text = yax_lim[0]-40
+          elif i==13 or i==22:
+             y_pos_text = yax_lim[0]-20
+          else:
+             y_pos_text = yax_lim[0]-27
+          ax1.text(-0.05, y_pos_text,'*dati raccolti tra il 25/06/2021 e il 13/09/2021', size=5, color='black',fontstyle='italic')
+          #########################
+          #UNCOMMENT FOR THE LOGO
+          #im = image.imread('./LA_logo.pdf')
+          #imagebox = OffsetImage(im, zoom=0.025)
+          #ab = AnnotationBbox(imagebox, (-0.02, yax_lim[1]*1.1))
+          #ax1.add_artist(ab)
+          #########################
+          plt.draw()
           plt.show()
           i=i+1
     print('Next bunch of plots')
@@ -120,12 +156,18 @@ def split_gender(data,gender,order, isAge,arr_tsv):
 
 def check_order(i):
    do_hist = 0
-   if (i>=9 and i<=14) or (i>=16 and i<=25) or (i==28) or (i==40) or (i==42):
+   if (i>=9 and i<=14) or (i>=16 and i<=25) or (i==28) or (i>=40 and i!=41):
       order = [b"non so", b"per nulla",b"poco",b"abbastanza",b"molto"]
    elif i>=29 and i<=31: 
       order = [b"1", b"2",b"3",b"4",b"5"]
    elif (i>=32 and i<=38):
       order = [b"per nulla",b"poco",b"abbastanza",b"molto"]
+   elif (i==7):
+      order = [b"centro",b"cerreto",b"domitilla",b"palo laziale",b'miami',b'ex campo sportivo',b'monteroni/boietto',b'lungomare']
+   elif (i==8):
+      order = [b'Roma',b'Ladispoli',b'Altri comuni limitrofi',b'Altro']
+   elif (i==41):
+      order = [b'si',b'no',b'forse']
    else:
       do_hist = 1
       order = []
