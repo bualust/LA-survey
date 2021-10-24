@@ -58,64 +58,17 @@ def looper(AGE):
        else:
           print('Currently processing question number: ',i)
           fig, (ax1) = plt.subplots(1)
+          do_hist = 0
           if i==1:
-             age_bins = [15,20,25,30,35,40,45,50,55,60,65,70,75]
-             data = np.array(arr_tsv[1:,i],dtype=int)
-             cnt_data = Counter(data)
-             grouped_data = group_age_data(cnt_data,age_bins)
-             x = np.arange(len(age_bins))
-             w = 0.2
-             pps = ax1.bar(x-w,grouped_data,label='inclusivo',width=w) 
-	     #gender split
-             gender = np.array(arr_tsv[1:,2])
-             ordered_data_f, ordered_data_m = split_gender(data,gender,age_bins,1)
-             ax1.bar(x,ordered_data_f,color='lightpink',label='femminile',width=w)
-             ax1.bar(x+w,ordered_data_m,color='cornflowerblue',label='maschile',width=w)
-             age_bins_label = ['15-20','20-25','25-30','30-35','35-40','40-45','45-50','50-55','55-60','60-65','65-70','70-75','75-80']
-             xaxis = np.array(age_bins_label,dtype=str)
-	     #this prevents the x-labels to be cropped
-             ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
-             ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
-             ax1.set_xticklabels(xaxis)
-             sum_of_answers = 0
-             for p in pps:
-                height = p.get_height()
-                sum_of_answers+=height
-             for p in pps:
-                height_perc = round(100*p.get_height()/sum_of_answers,1)
-                ax1.text(x=p.get_x() + p.get_width() / 2, y=p.get_height()+.10,
-                           s="{}%".format(height_perc),
-                           ha='center')
+             pps = age_plot(arr_tsv,ax1,i)
           else:
              order,do_hist = check_order(i)
              if(do_hist):
                 ax1.hist(arr_tsv[1:,i])
              else:
-                data = np.array(arr_tsv[1:,i])
-                cnt_data = Counter(data)
-                ordered_data = {ans:cnt_data[ans] for ans in order}
-                x = np.arange(len(ordered_data.keys()))
-                w = 0.2
-                pps = ax1.bar(x-w,ordered_data.values(),label='inclusivo',width=w) 
-	        #gender split
-                gender = np.array(arr_tsv[1:,2])
-                ordered_data_f, ordered_data_m = split_gender(data,gender,order,0)
-                ax1.bar(x,ordered_data_f.values(),color='lightpink',label='femminile',width=w)
-                ax1.bar(x+w,ordered_data_m.values(),color='cornflowerblue',label='maschile',width=w)
-                xaxis = np.array(order,dtype=str)
-	        #this prevents the x-labels to be cropped
-                ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
-                ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
-                ax1.set_xticklabels(xaxis)
-                sum_of_answers = 0
-                for p in pps:
-                   height = p.get_height()
-                   sum_of_answers+=height
-                for p in pps:
-                   height_perc = round(100*p.get_height()/sum_of_answers,1)
-                   ax1.text(x=p.get_x() + p.get_width() / 2, y=p.get_height()+.10,
-                              s="{}%".format(height_perc),
-                              ha='center')
+                pps = bar_chart(arr_tsv,ax1,i,order)
+          if do_hist==0:
+             percentage_on_bins(ax1,pps)
           ax1.set_title(arr_tsv[0,i].decode('cp1252'))
           ax1.legend()
           plt.show()
@@ -158,6 +111,57 @@ def check_order(i):
       order = []
    return order,do_hist
 
+def age_plot(arr_tsv,ax1,i):
+   age_bins = [15,20,25,30,35,40,45,50,55,60,65,70,75]
+   data = np.array(arr_tsv[1:,i],dtype=int)
+   cnt_data = Counter(data)
+   grouped_data = group_age_data(cnt_data,age_bins)
+   x = np.arange(len(age_bins))
+   w = 0.2
+   pps = ax1.bar(x-w,grouped_data,label='inclusivo',width=w) 
+   #gender split
+   gender = np.array(arr_tsv[1:,2])
+   ordered_data_f, ordered_data_m = split_gender(data,gender,age_bins,1)
+   ax1.bar(x,ordered_data_f,color='lightpink',label='femminile',width=w)
+   ax1.bar(x+w,ordered_data_m,color='cornflowerblue',label='maschile',width=w)
+   age_bins_label = ['15-20','20-25','25-30','30-35','35-40','40-45','45-50','50-55','55-60','60-65','65-70','70-75','75-80']
+   xaxis = np.array(age_bins_label,dtype=str)
+   #this prevents the x-labels to be cropped
+   ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
+   ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
+   ax1.set_xticklabels(xaxis)
+   return pps
+
+def bar_chart(arr_tsv,ax1,i,order):
+   data = np.array(arr_tsv[1:,i])
+   cnt_data = Counter(data)
+   ordered_data = {ans:cnt_data[ans] for ans in order}
+   x = np.arange(len(ordered_data.keys()))
+   w = 0.2
+   pps = ax1.bar(x-w,ordered_data.values(),label='inclusivo',width=w) 
+   #gender split
+   gender = np.array(arr_tsv[1:,2])
+   ordered_data_f, ordered_data_m = split_gender(data,gender,order,0)
+   ax1.bar(x,ordered_data_f.values(),color='lightpink',label='femminile',width=w)
+   ax1.bar(x+w,ordered_data_m.values(),color='cornflowerblue',label='maschile',width=w)
+   xaxis = np.array(order,dtype=str)
+   #this prevents the x-labels to be cropped
+   ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
+   ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
+   ax1.set_xticklabels(xaxis)
+   return pps
+
+def percentage_on_bins(ax1,pps):
+  sum_of_answers = 0
+  for p in pps:
+     height = p.get_height()
+     sum_of_answers+=height
+  for p in pps:
+     height_perc = round(100*p.get_height()/sum_of_answers,1)
+     print(height_perc,sum_of_answers)
+     ax1.text(x=p.get_x() + p.get_width() / 2, y=p.get_height()+.10,
+                s="{}%".format(height_perc),
+                ha='center')
 # __main__
 if __name__ == '__main__':
   main()
