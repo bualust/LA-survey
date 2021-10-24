@@ -20,7 +20,7 @@ plt.style.use('ggplot')
 def main():
      parser = OptionParser()
      parser.add_option("--age", dest="age", default="15",help="Apply minimum cut on age [default: %default]", metavar="INT")
-     parser.add_option("--gender", dest="gender", default="femminile",help="Apply selection on gender [default: %default]", metavar="STRING")
+     parser.add_option("--gender", dest="gender", default=True,help="Split plots based on gender [default: %default]", metavar="STRING")
 
      try:
          (options, args) = parser.parse_args()
@@ -31,16 +31,21 @@ def main():
      global age
      age = options.age
 
-     global gender
-     gender = options.gender
+     global gender_opt
+     gender_opt = options.gender
 
-     looper(age)
+     global w
+     w = 0.2
+
+     print (options)
+
+     looper()
      exit()
 
 # ---------------------------
 # Looper: loops over answers 
 # ---------------------------
-def looper(AGE):
+def looper():
     FILE = 'Questionario_Sept2021.tsv'
     print('--- Opening data file:',FILE)
     num_lines = sum(1 for line in open(FILE))
@@ -52,11 +57,11 @@ def looper(AGE):
 
     i=1
     while i <= number_of_questions: 
-       if i==27 or i==5:
-          print('Skipping question number:  ',i)
+       if i==27 or i==5 or i==39:
+          print('Skipping question number:  ',arr_tsv[0,i].decode('cp1252'))
           i=i+1
        else:
-          print('Currently processing question number: ',i)
+          print('Currently processing question number: ',arr_tsv[0,i].decode('cp1252'))
           fig, (ax1) = plt.subplots(1)
           do_hist = 0
           if i==1:
@@ -98,14 +103,18 @@ def split_gender(data,gender,order, isAge):
    else:
       ordered_data_f = {ans:cnt_data_f[ans] for ans in order}
       ordered_data_m = {ans:cnt_data_m[ans] for ans in order}
+      ordered_data_f=ordered_data_f.values()
+      ordered_data_m=ordered_data_m.values()
    return ordered_data_f,ordered_data_m
 
 def check_order(i):
    do_hist = 0
-   if (i>=9 and i<=14) or (i>=16 and i<=25) or (i==28) or (i>=32 and i<=38) or (i==40) or (i==42):
+   if (i>=9 and i<=14) or (i>=16 and i<=25) or (i==28) or (i==40) or (i==42):
       order = [b"non so", b"per nulla",b"poco",b"abbastanza",b"molto"]
    elif i>=29 and i<=31: 
       order = [b"1", b"2",b"3",b"4",b"5"]
+   elif (i>=32 and i<=38):
+      order = [b"per nulla",b"poco",b"abbastanza",b"molto"]
    else:
       do_hist = 1
       order = []
@@ -117,13 +126,10 @@ def age_plot(arr_tsv,ax1,i):
    cnt_data = Counter(data)
    grouped_data = group_age_data(cnt_data,age_bins)
    x = np.arange(len(age_bins))
-   w = 0.2
    pps = ax1.bar(x-w,grouped_data,label='inclusivo',width=w) 
    #gender split
-   gender = np.array(arr_tsv[1:,2])
-   ordered_data_f, ordered_data_m = split_gender(data,gender,age_bins,1)
-   ax1.bar(x,ordered_data_f,color='lightpink',label='femminile',width=w)
-   ax1.bar(x+w,ordered_data_m,color='cornflowerblue',label='maschile',width=w)
+   if gender_opt:
+      add_gender_bars(arr_tsv,data,age_bins,True,ax1,x)
    age_bins_label = ['15-20','20-25','25-30','30-35','35-40','40-45','45-50','50-55','55-60','60-65','65-70','70-75','75-80']
    xaxis = np.array(age_bins_label,dtype=str)
    #this prevents the x-labels to be cropped
@@ -137,19 +143,30 @@ def bar_chart(arr_tsv,ax1,i,order):
    cnt_data = Counter(data)
    ordered_data = {ans:cnt_data[ans] for ans in order}
    x = np.arange(len(ordered_data.keys()))
-   w = 0.2
    pps = ax1.bar(x-w,ordered_data.values(),label='inclusivo',width=w) 
    #gender split
-   gender = np.array(arr_tsv[1:,2])
-   ordered_data_f, ordered_data_m = split_gender(data,gender,order,0)
-   ax1.bar(x,ordered_data_f.values(),color='lightpink',label='femminile',width=w)
-   ax1.bar(x+w,ordered_data_m.values(),color='cornflowerblue',label='maschile',width=w)
+   if gender_opt:
+      add_gender_bars(arr_tsv,data,order,False,ax1,x)
    xaxis = np.array(order,dtype=str)
+   if i>=29 and i<=31: 
+      if i==29:
+         age_bins_label = ['1 (sicura)','2','3','4','5 (insicura)']
+      elif i==30:
+         age_bins_label = ['1 (bella)','2','3','4','5 (brutta)']
+      elif i==31:
+         age_bins_label = ['1 (ospitale)','2','3','4','5 (ostile)']
+      xaxis = np.array(age_bins_label,dtype=str)
    #this prevents the x-labels to be cropped
    ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
    ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
    ax1.set_xticklabels(xaxis)
    return pps
+
+def add_gender_bars(arr_tsv,data,order,isAge,ax1,x):
+   gender = np.array(arr_tsv[1:,2])
+   ordered_data_f, ordered_data_m = split_gender(data,gender,order,isAge)
+   ax1.bar(x,ordered_data_f,color='lightpink',label='femminile',width=w)
+   ax1.bar(x+w,ordered_data_m,color='cornflowerblue',label='maschile',width=w)
 
 def percentage_on_bins(ax1,pps):
   sum_of_answers = 0
@@ -158,7 +175,6 @@ def percentage_on_bins(ax1,pps):
      sum_of_answers+=height
   for p in pps:
      height_perc = round(100*p.get_height()/sum_of_answers,1)
-     print(height_perc,sum_of_answers)
      ax1.text(x=p.get_x() + p.get_width() / 2, y=p.get_height()+.10,
                 s="{}%".format(height_perc),
                 ha='center')
