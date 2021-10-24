@@ -77,31 +77,27 @@ def looper(AGE):
              ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
              ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
              ax1.set_xticklabels(xaxis)
-          elif (i>=9 and i<=14) or (i>=16 and i<=25) or (i==28) or (i>=32 and i<=38) or (i==40) or (i==42):
-             order = [b"non so", b"per nulla",b"poco",b"abbastanza",b"molto"]
-             data = np.array(arr_tsv[1:,i])
-             cnt_data = Counter(data)
-             ordered_data = {ans:cnt_data[ans] for ans in order}
-             x = np.arange(len(ordered_data.keys()))
-             w = 0.2
-             ax1.bar(x-w,ordered_data.values(),label='inclusivo',width=w) 
-	     #gender split
-             gender = np.array(arr_tsv[1:,2])
-             ordered_data_f, ordered_data_m = split_gender(data,gender,order,0)
-             ax1.bar(x,ordered_data_f.values(),color='lightpink',label='femminile',width=w)
-             ax1.bar(x+w,ordered_data_m.values(),color='cornflowerblue',label='maschile',width=w)
-             xaxis = np.array(order,dtype=str)
-	     #this prevents the x-labels to be cropped
-             ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
-             ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
-             ax1.set_xticklabels(xaxis)
-          elif i>=29 and i<=31: 
-             order = [b"1", b"2",b"3",b"4",b"5"]
-             data = Counter(np.array(arr_tsv[1:,i]))
-             ordered_data = {ans:data[ans] for ans in order}
-             ax1.bar(ordered_data.keys(),ordered_data.values()) 
           else:
-             ax1.hist(arr_tsv[1:,i])
+             order,do_hist = check_order(i)
+             if(do_hist):
+                ax1.hist(arr_tsv[1:,i])
+             else:
+                data = np.array(arr_tsv[1:,i])
+                cnt_data = Counter(data)
+                ordered_data = {ans:cnt_data[ans] for ans in order}
+                x = np.arange(len(ordered_data.keys()))
+                w = 0.2
+                ax1.bar(x-w,ordered_data.values(),label='inclusivo',width=w) 
+	        #gender split
+                gender = np.array(arr_tsv[1:,2])
+                ordered_data_f, ordered_data_m = split_gender(data,gender,order,0)
+                ax1.bar(x,ordered_data_f.values(),color='lightpink',label='femminile',width=w)
+                ax1.bar(x+w,ordered_data_m.values(),color='cornflowerblue',label='maschile',width=w)
+                xaxis = np.array(order,dtype=str)
+	        #this prevents the x-labels to be cropped
+                ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
+                ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
+                ax1.set_xticklabels(xaxis)
           ax1.set_title(arr_tsv[0,i].decode('cp1252'))
           ax1.legend()
           plt.show()
@@ -132,6 +128,18 @@ def split_gender(data,gender,order, isAge):
       ordered_data_f = {ans:cnt_data_f[ans] for ans in order}
       ordered_data_m = {ans:cnt_data_m[ans] for ans in order}
    return ordered_data_f,ordered_data_m
+
+def check_order(i):
+   do_hist = 0
+   if (i>=9 and i<=14) or (i>=16 and i<=25) or (i==28) or (i>=32 and i<=38) or (i==40) or (i==42):
+      order = [b"non so", b"per nulla",b"poco",b"abbastanza",b"molto"]
+   elif i>=29 and i<=31: 
+      order = [b"1", b"2",b"3",b"4",b"5"]
+   else:
+      do_hist = 1
+      order = []
+   return order,do_hist
+
 # __main__
 if __name__ == '__main__':
   main()
