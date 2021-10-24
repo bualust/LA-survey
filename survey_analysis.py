@@ -68,17 +68,11 @@ def looper(AGE):
              ax1.bar(x-w,grouped_data,label='inclusivo',width=w) 
 	     #gender split
              gender = np.array(arr_tsv[1:,2])
-             data_hist_f = data[(gender==b'femminile')]
-             data_hist_m = data[(gender==b'maschile')]
-             cnt_data_f = Counter(data_hist_f)
-             cnt_data_m = Counter(data_hist_m)
-             ordered_data_f = group_age_data(cnt_data_f,age_bins)
-             ordered_data_m = group_age_data(cnt_data_m,age_bins)
+             ordered_data_f, ordered_data_m = split_gender(data,gender,age_bins,1)
              ax1.bar(x,ordered_data_f,color='lightpink',label='femminile',width=w)
              ax1.bar(x+w,ordered_data_m,color='cornflowerblue',label='maschile',width=w)
              age_bins_label = ['15-20','20-25','25-30','30-35','35-40','40-45','45-50','50-55','55-60','60-65','65-70','70-75','75-80']
              xaxis = np.array(age_bins_label,dtype=str)
-             print(x, xaxis)
 	     #this prevents the x-labels to be cropped
              ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
              ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
@@ -93,12 +87,7 @@ def looper(AGE):
              ax1.bar(x-w,ordered_data.values(),label='inclusivo',width=w) 
 	     #gender split
              gender = np.array(arr_tsv[1:,2])
-             data_hist_f = data[(gender==b'femminile')]
-             data_hist_m = data[(gender==b'maschile')]
-             cnt_data_hist_f = Counter(data_hist_f)
-             cnt_data_hist_m = Counter(data_hist_m)
-             ordered_data_f = {ans:cnt_data_hist_f[ans] for ans in order}
-             ordered_data_m = {ans:cnt_data_hist_m[ans] for ans in order}
+             ordered_data_f, ordered_data_m = split_gender(data,gender,order,0)
              ax1.bar(x,ordered_data_f.values(),color='lightpink',label='femminile',width=w)
              ax1.bar(x+w,ordered_data_m.values(),color='cornflowerblue',label='maschile',width=w)
              xaxis = np.array(order,dtype=str)
@@ -130,6 +119,19 @@ def group_age_data(cnt_data,age_bins):
           if age_key>=age_bins[i] and age_key<age_bins[i+1]:
              grouped_data[i]+=age_count
    return grouped_data
+
+def split_gender(data,gender,order, isAge):
+   data_f = data[(gender==b'femminile')]
+   data_m = data[(gender==b'maschile')]
+   cnt_data_f = Counter(data_f)
+   cnt_data_m = Counter(data_m)
+   if isAge:
+      ordered_data_f = group_age_data(cnt_data_f,order)
+      ordered_data_m = group_age_data(cnt_data_m,order)
+   else:
+      ordered_data_f = {ans:cnt_data_f[ans] for ans in order}
+      ordered_data_m = {ans:cnt_data_m[ans] for ans in order}
+   return ordered_data_f,ordered_data_m
 # __main__
 if __name__ == '__main__':
   main()
