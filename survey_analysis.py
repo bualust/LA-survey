@@ -65,7 +65,7 @@ def looper(AGE):
              grouped_data = group_age_data(cnt_data,age_bins)
              x = np.arange(len(age_bins))
              w = 0.2
-             ax1.bar(x-w,grouped_data,label='inclusivo',width=w) 
+             pps = ax1.bar(x-w,grouped_data,label='inclusivo',width=w) 
 	     #gender split
              gender = np.array(arr_tsv[1:,2])
              ordered_data_f, ordered_data_m = split_gender(data,gender,age_bins,1)
@@ -77,6 +77,15 @@ def looper(AGE):
              ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
              ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
              ax1.set_xticklabels(xaxis)
+             sum_of_answers = 0
+             for p in pps:
+                height = p.get_height()
+                sum_of_answers+=height
+             for p in pps:
+                height_perc = round(100*p.get_height()/sum_of_answers,1)
+                ax1.text(x=p.get_x() + p.get_width() / 2, y=p.get_height()+.10,
+                           s="{}%".format(height_perc),
+                           ha='center')
           else:
              order,do_hist = check_order(i)
              if(do_hist):
@@ -87,7 +96,7 @@ def looper(AGE):
                 ordered_data = {ans:cnt_data[ans] for ans in order}
                 x = np.arange(len(ordered_data.keys()))
                 w = 0.2
-                ax1.bar(x-w,ordered_data.values(),label='inclusivo',width=w) 
+                pps = ax1.bar(x-w,ordered_data.values(),label='inclusivo',width=w) 
 	        #gender split
                 gender = np.array(arr_tsv[1:,2])
                 ordered_data_f, ordered_data_m = split_gender(data,gender,order,0)
@@ -98,6 +107,15 @@ def looper(AGE):
                 ax1.xaxis.set_major_locator(mticker.FixedLocator(x))
                 ax1.xaxis.set_major_formatter(mticker.FixedFormatter(xaxis))
                 ax1.set_xticklabels(xaxis)
+                sum_of_answers = 0
+                for p in pps:
+                   height = p.get_height()
+                   sum_of_answers+=height
+                for p in pps:
+                   height_perc = round(100*p.get_height()/sum_of_answers,1)
+                   ax1.text(x=p.get_x() + p.get_width() / 2, y=p.get_height()+.10,
+                              s="{}%".format(height_perc),
+                              ha='center')
           ax1.set_title(arr_tsv[0,i].decode('cp1252'))
           ax1.legend()
           plt.show()
